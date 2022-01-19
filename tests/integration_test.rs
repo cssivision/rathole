@@ -115,7 +115,7 @@ async fn test(config_path: &'static str, t: Type) -> Result<()> {
             .await
             .unwrap();
     });
-    time::sleep(Duration::from_millis(2000)).await; // Wait for the client to retry
+    time::sleep(Duration::from_millis(2500)).await; // Wait for the client to retry
 
     info!("echo");
     echo_hitter(ECHO_SERVER_ADDR_EXPOSED, t).await.unwrap();
@@ -157,7 +157,7 @@ async fn test(config_path: &'static str, t: Type) -> Result<()> {
             .await
             .unwrap();
     });
-    time::sleep(Duration::from_millis(2000)).await; // Wait for the client to retry
+    time::sleep(Duration::from_millis(2500)).await; // Wait for the client to retry
 
     // Simulate heavy load
     info!("lots of echo and pingpong");
