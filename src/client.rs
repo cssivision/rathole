@@ -31,11 +31,11 @@ use crate::constants::{run_control_chan_backoff, UDP_BUFFER_SIZE, UDP_SENDQ_SIZE
 
 // The entrypoint of running a client
 pub async fn run_client(
-    config: &Config,
+    config: Config,
     shutdown_rx: broadcast::Receiver<bool>,
     service_rx: mpsc::Receiver<ServiceChange>,
 ) -> Result<()> {
-    let config = config.client.as_ref().ok_or(anyhow!(
+    let config = config.client.ok_or(anyhow!(
         "Try to run as a client, but the configuration is missing. Please add the `[client]` block"
     ))?;
 
@@ -78,21 +78,21 @@ type ServiceDigest = protocol::Digest;
 type Nonce = protocol::Digest;
 
 // Holds the state of a client
-struct Client<'a, T: Transport> {
-    config: &'a ClientConfig,
+struct Client<T: Transport> {
+    config: ClientConfig,
     service_handles: HashMap<String, ControlChannelHandle>,
     transport: Arc<T>,
 }
 
-impl<'a, T: 'static + Transport> Client<'a, T> {
+impl<T: 'static + Transport> Client<T> {
     // Create a Client from `[client]` config block
-    async fn from(config: &'a ClientConfig) -> Result<Client<'a, T>> {
+    async fn from(config: ClientConfig) -> Result<Client<T>> {
+        let transport =
+            Arc::new(T::new(&config.transport).with_context(|| "Failed to create the transport")?);
         Ok(Client {
             config,
             service_handles: HashMap::new(),
-            transport: Arc::new(
-                T::new(&config.transport).with_context(|| "Failed to create the transport")?,
-            ),
+            transport,
         })
     }
 
@@ -108,6 +108,7 @@ impl<'a, T: 'static + Transport> Client<'a, T> {
                 (*config).clone(),
                 self.config.remote_addr.clone(),
                 self.transport.clone(),
+                self.config.heartbeat_timeout,
             );
             self.service_handles.insert(name.clone(), handle);
         }
@@ -133,6 +134,7 @@ impl<'a, T: 'static + Transport> Client<'a, T> {
                                     s,
                                     self.config.remote_addr.clone(),
                                     self.transport.clone(),
+                                    self.config.heartbeat_timeout
                                 );
                                 let _ = self.service_handles.insert(name, handle);
                             },
@@ -380,6 +382,7 @@ struct ControlChannel<T: Transport> {
     shutdown_rx: oneshot::Receiver<u8>, // Receives the shutdown signal
     remote_addr: String,                // `client.remote_addr`
     transport: Arc<T>,                  // Wrapper around the transport layer
+    heartbeat_timeout: u64,             // Application layer heartbeat timeout in secs
 }
 
 // Handle of a control channel
@@ -462,9 +465,14 @@ impl<T: 'static + Transport> ControlChannel<T> {
                                     warn!("{:#}", e);
                                 }
                             }.instrument(Span::current()));
-                        }
+                        },
+                        ControlChannelCmd::HeartBeat => ()
                     }
                 },
+                _ = time::sleep(Duration::from_secs(self.heartbeat_timeout)), if self.heartbeat_timeout != 0 => {
+                    warn!("Heartbeat timed out");
+                    break;
+                }
                 _ = &mut self.shutdown_rx => {
                     break;
                 }
@@ -482,6 +490,7 @@ impl ControlChannelHandle {
         service: ClientServiceConfig,
         remote_addr: String,
         transport: Arc<T>,
+        heartbeat_timeout: u64,
     ) -> ControlChannelHandle {
         let digest = protocol::digest(service.name.as_bytes());
 
@@ -493,6 +502,7 @@ impl ControlChannelHandle {
             shutdown_rx,
             remote_addr,
             transport,
+            heartbeat_timeout,
         };
 
         tokio::spawn(
