@@ -1,4 +1,4 @@
-use crate::config::{ClientServiceConfig, ServerServiceConfig, TransportConfig};
+use crate::config::{ClientServiceConfig, ServerServiceConfig, TcpConfig, TransportConfig};
 use crate::helper::try_set_tcp_keepalive;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
@@ -27,7 +27,8 @@ pub trait Transport: Debug + Send + Sync {
     /// Provide the transport with socket options, which can be handled at the need of the transport
     fn hint(conn: &Self::Stream, opts: SocketOpts);
     async fn bind<T: ToSocketAddrs + Send + Sync>(&self, addr: T) -> Result<Self::Acceptor>;
-    async fn accept(&self, a: &mut Self::Acceptor) -> Result<(Self::RawStream, SocketAddr)>;
+    /// accept must be cancel safe
+    async fn accept(&self, a: &Self::Acceptor) -> Result<(Self::RawStream, SocketAddr)>;
     async fn handshake(&self, conn: Self::RawStream) -> Result<Self::Stream>;
     async fn connect(&self, addr: &str) -> Result<Self::Stream>;
     async fn close(&self, a: Self::Acceptor);
@@ -84,7 +85,7 @@ impl SocketOpts {
 }
 
 impl SocketOpts {
-    pub fn from_transport_cfg(cfg: &TransportConfig) -> SocketOpts {
+    pub fn from_cfg(cfg: &TcpConfig) -> SocketOpts {
         SocketOpts {
             nodelay: Some(cfg.nodelay),
             keepalive: Some(Keepalive {
