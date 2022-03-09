@@ -330,7 +330,19 @@ impl Config {
                     .quic
                     .as_ref()
                     .ok_or(anyhow!("Missing QUIC configuration"))?;
-                Config::validate_tls_config(tls_config, is_server, true)
+                if is_server {
+                    tls_config
+                        .pkcs12
+                        .as_ref()
+                        .and(tls_config.pkcs12_password.as_ref())
+                        .ok_or(anyhow!("Missing `pkcs12` or `pkcs12_password`"))?;
+                } else {
+                    tls_config
+                        .trusted_root
+                        .as_ref()
+                        .ok_or(anyhow!("Missing `trusted_root`"))?;
+                }
+                Ok(())
             }
             TransportType::Noise => {
                 // The check is done in transport
