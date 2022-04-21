@@ -494,7 +494,6 @@ checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
 dependencies = [
  "block-buffer 0.10.2",
  "crypto-common",
- "generic-array",
  "subtle",
 ]
 
@@ -838,7 +837,7 @@ version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddca131f3e7f2ce2df364b57949a9d47915cfbd35e46cfee355ccebbf794d6a2"
 dependencies = [
- "digest 0.10.1",
+ "digest 0.10.3",
 ]
 
 [[package]]
@@ -1299,7 +1298,7 @@ checksum = "55a97f513ac60e90aec6d9db783b1924a25839a2635036a3ab64f2ca78cd4518"
 dependencies = [
  "block-modes",
  "des",
- "getrandom 0.2.4",
+ "getrandom 0.2.5",
  "hmac",
  "lazy_static",
  "rc2",
@@ -1580,7 +1579,7 @@ checksum = "5f7996776e9ee3fc0e5c14476c1a640a17e993c847ae9c81191c2c102fbef903"
 dependencies = [
  "futures-util",
  "libc",
- "mio",
+ "mio 0.7.14",
  "quinn-proto",
  "socket2",
  "tokio",
@@ -1910,7 +1909,7 @@ checksum = "028f48d513f9678cda28f6e4064755b3fbb2af6acd672f2c209b62323f7aea0f"
 dependencies = [
  "cfg-if",
  "cpufeatures",
- "digest 0.10.1",
+ "digest 0.10.3",
 ]
 
 [[package]]

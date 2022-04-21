@@ -78,7 +78,7 @@ impl Transport for NoiseTransport {
         Ok(TcpListener::bind(addr).await?)
     }
 
-    async fn accept(&self, a: &mut Self::Acceptor) -> Result<(Self::RawStream, SocketAddr)> {
+    async fn accept(&self, a: &Self::Acceptor) -> Result<(Self::RawStream, SocketAddr)> {
         self.tcp
             .accept(a)
             .await
@@ -105,6 +105,5 @@ impl Transport for NoiseTransport {
         return Ok(conn);
     }
 
-    async fn close(&self, _: Self::Acceptor) {
-    }
+    async fn close(&self, _: Self::Acceptor) {}
 }

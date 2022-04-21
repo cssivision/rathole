@@ -26,7 +26,10 @@ impl Transport for TlsTransport {
 
     fn new(config: &TransportConfig) -> Result<Self> {
         let tcp = TcpTransport::new(config)?;
-        let config = config.tls.as_ref().ok_or_else(|| anyhow!("Missing tls config"))?;
+        let config = config
+            .tls
+            .as_ref()
+            .ok_or_else(|| anyhow!("Missing tls config"))?;
 
         let connector = match config.trusted_root.as_ref() {
             Some(path) => {
@@ -75,7 +78,7 @@ impl Transport for TlsTransport {
         Ok(l)
     }
 
-    async fn accept(&self, a: &mut Self::Acceptor) -> Result<(Self::RawStream, SocketAddr)> {
+    async fn accept(&self, a: &Self::Acceptor) -> Result<(Self::RawStream, SocketAddr)> {
         self.tcp
             .accept(a)
             .await
@@ -102,6 +105,5 @@ impl Transport for TlsTransport {
             .await?)
     }
 
-    async fn close(&self, _: Self::Acceptor) {
-    }
+    async fn close(&self, _: Self::Acceptor) {}
 }

@@ -25,10 +25,10 @@ use tracing::{debug, error, info, info_span, instrument, warn, Instrument, Span}
 
 #[cfg(feature = "noise")]
 use crate::transport::NoiseTransport;
-#[cfg(feature = "tls")]
-use crate::transport::TlsTransport;
 #[cfg(feature = "quic")]
 use crate::transport::QuicTransport;
+#[cfg(feature = "tls")]
+use crate::transport::TlsTransport;
 
 type ServiceDigest = protocol::Digest; // SHA256 of a service name
 type Nonce = protocol::Digest; // Also called `session_key`

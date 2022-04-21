@@ -163,7 +163,7 @@ pub struct TcpConfig {
     pub tls: Option<TlsConfig>,
     pub noise: Option<NoiseConfig>,
     pub proxy: Option<Url>,
-    pub quic: Option<TlsConfig>,  // reuse TLSconfig since QUIC uses TLS1.3
+    pub quic: Option<TlsConfig>, // reuse TLSconfig since QUIC uses TLS1.3
 }
 
 impl Default for TcpConfig {
@@ -175,7 +175,7 @@ impl Default for TcpConfig {
             tls: None,
             noise: None,
             proxy: None,
-            quic: None
+            quic: None,
         }
     }
 }
@@ -189,6 +189,7 @@ pub struct TransportConfig {
     pub tcp: TcpConfig,
     pub tls: Option<TlsConfig>,
     pub noise: Option<NoiseConfig>,
+    pub quic: Option<TlsConfig>, // reuse TLSconfig since QUIC uses TLS1.3
 }
 
 fn default_heartbeat_timeout() -> u64 {
@@ -283,14 +284,15 @@ impl Config {
         Ok(())
     }
 
-    fn validate_tls_config(tls_config: &TlsConfig, is_server:  bool, is_quic: bool) -> Result<()>{
+    fn validate_tls_config(tls_config: &TlsConfig, is_server: bool, is_quic: bool) -> Result<()> {
         if is_server {
             if tls_config.pem_server_key.is_some() {
                 if !is_quic {
                     bail!("`pem_server_key` and `pem_server_cert` are not yet supported for TLS")
                 }
-                tls_config.pem_server_cert.as_ref().ok_or(
-                    anyhow!("`pem_server_key` provided but `pem_server_cert` is missing"))?;
+                tls_config.pem_server_cert.as_ref().ok_or(anyhow!(
+                    "`pem_server_key` provided but `pem_server_cert` is missing"
+                ))?;
             } else {
                 tls_config
                     .pkcs12
